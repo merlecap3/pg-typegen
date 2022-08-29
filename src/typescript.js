@@ -62,7 +62,7 @@ function getColumnType (typeMapping, type, enums) {
   return result[0]
 }
 
-function getTableType (opts, tableName, suffix) {
+function getParsedTableName(tableName) {
   let parsedTableName = toPascalCase(tableName)
   if (parsedTableName.endsWith('ies')) {
     parsedTableName = parsedTableName.slice(0, -3) + 'y'
@@ -73,6 +73,11 @@ function getTableType (opts, tableName, suffix) {
   } else if (parsedTableName.endsWith('s')) {
     parsedTableName = parsedTableName.slice(0, -1)
   }
+  return parsedTableName
+}
+
+function getTableType (opts, tableName, suffix) {
+  const parsedTableName = getParsedTableName(tableName)
 
   if (opts.type) {
     return `export type ${parsedTableName}${suffix} = {`
@@ -193,6 +198,10 @@ function typescript (opts, schema) {
 
   if (opts.tableNames) {
     result += `export type Tables = ${tables.filter(table => !table.isView && !opts.exclude.includes(table.name)).map(table => `'${table.name}'`).join(' | ')}${semicolon(opts)}`
+    result += '\n\n'
+    result += `export enum Table { 
+    ${tables.filter(table => !table.isView && !opts.exclude.includes(table.name)).map(table => `${getParsedTableName(table.name)} = '${table.name}'`).join(', \n    ')}${semicolon(opts)}
+}`
     result += '\n\n'
   }
 
